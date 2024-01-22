@@ -174,15 +174,22 @@ impl Deserializable for ProcedureAst {
 pub struct ProcReExport {
     pub(crate) proc_id: ProcedureId,
     pub(crate) name: ProcedureName,
+    pub(crate) module_path: LibraryPath,
     pub(crate) docs: Option<String>,
 }
 
 impl ProcReExport {
     /// Creates a new re-exported procedure.
-    pub fn new(proc_id: ProcedureId, name: ProcedureName, docs: Option<String>) -> Self {
+    pub fn new(
+        proc_id: ProcedureId,
+        name: ProcedureName,
+        module_path: LibraryPath,
+        docs: Option<String>,
+    ) -> Self {
         Self {
             proc_id,
             name,
+            module_path,
             docs,
         }
     }
@@ -205,6 +212,11 @@ impl ProcReExport {
         self.docs.as_deref()
     }
 
+    /// Returns the path of the module where this procedure is defined.
+    pub fn module_path(&self) -> &LibraryPath {
+        &self.module_path
+    }
+
     /// Returns the ID of the re-exported procedure using the specified module.
     pub fn get_alias_id(&self, module_path: &LibraryPath) -> ProcedureId {
         ProcedureId::from_name(&self.name, module_path)
@@ -215,6 +227,7 @@ impl Serializable for ProcReExport {
     fn write_into<W: ByteWriter>(&self, target: &mut W) {
         self.proc_id.write_into(target);
         self.name.write_into(target);
+        self.module_path.write_into(target);
         match &self.docs {
             Some(docs) => {
                 assert!(docs.len() <= MAX_DOCS_LEN, "docs too long");
@@ -232,6 +245,7 @@ impl Deserializable for ProcReExport {
     fn read_from<R: ByteReader>(source: &mut R) -> Result<Self, DeserializationError> {
         let proc_id = ProcedureId::read_from(source)?;
         let name = ProcedureName::read_from(source)?;
+        let module_path = LibraryPath::read_from(source)?;
         let docs_len = source.read_u16()? as usize;
         let docs = if docs_len != 0 {
             let str = source.read_vec(docs_len)?;
@@ -244,6 +258,7 @@ impl Deserializable for ProcReExport {
         Ok(Self {
             proc_id,
             name,
+            module_path,
             docs,
         })
     }

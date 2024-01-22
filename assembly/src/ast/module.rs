@@ -101,6 +101,9 @@ impl ModuleAst {
             }
         }
 
+        #[cfg(feature = "std")]
+        check_unused_imports(&context);
+
         // build a list of local procs sorted by their declaration order
         let local_procs = sort_procs_into_vec(context.local_procs);
 
@@ -109,9 +112,6 @@ impl ModuleAst {
 
         // get module docs and make sure the size is within the limit
         let docs = tokens.take_module_comments();
-
-        #[cfg(feature = "std")]
-        check_unused_imports(context.import_info);
 
         Ok(Self::new(local_procs, reexported_procs, docs)?.with_import_info(import_info))
     }

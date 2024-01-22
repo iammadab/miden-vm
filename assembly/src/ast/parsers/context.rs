@@ -382,7 +382,7 @@ impl ParserContext<'_> {
         }
 
         let proc_id = ProcedureId::from_name(&ref_name, module_path);
-        Ok(ProcReExport::new(proc_id, proc_name, docs))
+        Ok(ProcReExport::new(proc_id, proc_name, module_path.clone(), docs))
     }
 
     // BODY PARSER

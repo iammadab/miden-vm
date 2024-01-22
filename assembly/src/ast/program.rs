@@ -183,7 +183,7 @@ impl ProgramAst {
         }
 
         #[cfg(feature = "std")]
-        check_unused_imports(context.import_info);
+        check_unused_imports(&context);
 
         let local_procs = sort_procs_into_vec(context.local_procs);
         let (nodes, locations) = body.into_parts();

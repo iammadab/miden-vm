@@ -43,7 +43,7 @@ mod program;
 pub use program::ProgramAst;
 
 pub(crate) use parsers::{
-    parse_param_with_constant_lookup, NAMESPACE_LABEL_PARSER, PROCEDURE_LABEL_PARSER,
+    parse_param_with_constant_lookup, ParserContext, NAMESPACE_LABEL_PARSER, PROCEDURE_LABEL_PARSER,
 };
 
 mod serde;
@@ -96,13 +96,22 @@ fn sort_procs_into_vec(proc_map: LocalProcMap) -> Vec<ProcedureAst> {
 
 /// Logging a warning message for every imported but unused module.
 #[cfg(feature = "std")]
-fn check_unused_imports(import_info: &ModuleImports) {
-    let import_lib_paths = import_info.import_paths();
-    let invoked_procs_paths: Vec<&LibraryPath> =
-        import_info.invoked_procs().iter().map(|(_id, (_name, path))| path).collect();
+fn check_unused_imports(context: &ParserContext) {
+    let import_lib_paths = context.import_info.import_paths();
+    let invoked_procs_paths: Vec<&LibraryPath> = context
+        .import_info
+        .invoked_procs()
+        .iter()
+        .map(|(_id, (_name, path))| path)
+        .collect();
+    let reexported_procs_paths: Vec<&LibraryPath> = context
+        .reexported_procs
+        .values()
+        .map(|proc_reexport| proc_reexport.module_path())
+        .collect();
 
     for lib in import_lib_paths {
-        if !invoked_procs_paths.contains(&lib) {
+        if !invoked_procs_paths.contains(&lib) && !reexported_procs_paths.contains(&lib) {
             event!(Level::WARN, "unused import: \"{}\"", lib);
         }
     }
